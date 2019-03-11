@@ -105,7 +105,14 @@
 
 plot.multiverseMPT <- function(x, which = "est", save = FALSE, ...){
   
-  shapes <- c(16, 18, 15, 1, 0, 8, 11, 12, 4, 6)
+  args <- list(...)
+  
+  if(is.null(args$shapes)) {
+    shapes <- seq_len(nrow(x))
+  } else {
+    shapes <- args$shapes
+  }
+  
   
   results <- x
   prefix <- paste0(gsub("\\.eqn", "", results$model[1]), "_", 

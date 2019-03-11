@@ -57,8 +57,9 @@ mpt_mptinr <- function(
     )
   }
   
-  for(i in 1:length(res)) {
-    res[[i]]$test_homogeneity[[1]] <- homogeneity_tests
+  for(i in seq_len(length(res))) {
+    if (nrow(res[[i]]) > 0) 
+      res[[i]]$test_homogeneity[[1]] <- homogeneity_tests
   }
   
   # return
@@ -333,7 +334,7 @@ mpt_mptinr_no <- function(
   
   
   if ("pb" %in% bootstrap) {
-    res[["pb_no"]] <- get_pb_results(dataset = dataset
+    try(res[["pb_no"]] <- get_pb_results(dataset = dataset
                                      , prepared = prepared
                                      , model = model
                                      , id = id
@@ -342,10 +343,10 @@ mpt_mptinr_no <- function(
                                      , fit_mptinr = fit_mptinr
                                      , additional_time = additional_time
                                      , convergence = convergence
-                                     , core = core)
+                                     , core = core))
   }
   if ("npb" %in% bootstrap) {
-    res[["npb_no"]] <- get_pb_results(dataset = dataset
+    try(res[["npb_no"]] <- get_pb_results(dataset = dataset
                                      , prepared = prepared
                                      , model = model
                                      , id = id
@@ -354,7 +355,7 @@ mpt_mptinr_no <- function(
                                      , fit_mptinr = fit_mptinr
                                      , additional_time = additional_time
                                      , convergence = convergence
-                                     , core = core)
+                                     , core = core))
   }
   # return
   dplyr::bind_rows(res)
@@ -740,7 +741,10 @@ mpt_mptinr_complete <- function(dataset,
       fit_mptinr_tmp$parameters[
         res$est_group[[1]][res$est_group[[1]]$condition == prepared$conditions[i], ]$parameter, "estimates"]
 
-    par_se <- sqrt(diag(solve(fit_mptinr_tmp$hessian[[1]])))
+    par_se <- rep(NA_real_, length(rownames(fit_mptinr_tmp$parameters)))
+    par_se <- tryCatch(sqrt(diag(solve(fit_mptinr_tmp$hessian[[1]]))),
+                       error = function(x) 
+                         sqrt(diag(limSolve::Solve(fit_mptinr_tmp$hessian[[1]]))))
     names(par_se) <- rownames(fit_mptinr_tmp$parameters)
     
     res$est_group[[1]][

@@ -1,6 +1,6 @@
 Package: MPTmultiverse
 Title: Multiverse Analysis of Multinomial Processing Tree Models
-Version: 0.1
+Version: 0.2-0
 Description: 
     Statistical or cognitive modeling usually requires a number of more or less 
     arbitrary choices creating one specific path through a 'garden of forking paths'. 
@@ -30,18 +30,19 @@ URL: https://github.com/mpt-network/MPTmultiverse
 BugReports: https://github.com/mpt-network/MPTmultiverse/issues
 Depends: R (>= 2.11.1),
 Imports: parallel, magrittr, tidyr, dplyr, tibble, rlang, reshape2,
-        ggplot2, MPTinR, TreeBUGS, runjags, coda, purrr, broom, readr
+        ggplot2, MPTinR, TreeBUGS, runjags, coda, purrr, readr,
+        limSolve
 Suggests: knitr, rmarkdown, testthat
 LazyData: yes
 VignetteBuilder: knitr
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 License: GPL-2
 NeedsCompilation: no
-Packaged: 2018-11-11 22:31:44 UTC; henrik
+Packaged: 2019-03-11 21:24:50 UTC; henrik
 Author: Henrik Singmann [aut, cre] (<https://orcid.org/0000-0002-4842-3657>),
   Daniel W. Heck [aut],
   Marius Barth [aut],
   Frederik Aust [ctb] (<https://orcid.org/0000-0003-4900-788X>)
 Maintainer: Henrik Singmann <singmann@gmail.com>
 Repository: CRAN
-Date/Publication: 2018-11-19 18:20:11 UTC
+Date/Publication: 2019-03-11 23:52:42 UTC
