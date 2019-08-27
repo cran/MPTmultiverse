@@ -1,8 +1,8 @@
 #' Options Settings for MPT Comparison
-#' 
+#'
 #' Set and examine a variety of \emph{options} which affect the way MPT models
 #' are estimated.
-#' 
+#'
 #' @param ... Named parameters to set. Possible values are:
 #' \itemize{
 #'   \item{\code{bootstrap_samples}: }{Numeric. The number of bootstrap samples to be drawn for the calculation parametric bootstrap confidence intervals.}
@@ -23,50 +23,54 @@
 # ' TODO  \item{\code{catch_warnings}: }{Logical. Whether to store warnings and errors as additional columns in the output.}
 #'   \item{\code{save_models}: }{Logical. Default is \code{FALSE} which does not save the individual MCMC samples in \code{.RData} files. Instead only summairzes are retained in \code{results} object.}
 #' }
-#'   
-#' 
-#' @examples 
+#'
+#'
+#' @examples
 #' # Examine options:
 #' mpt_options()
-#' 
+#'
 #' # Set number of MCMC chains to 20:
 #' mpt_options(n.chains = 20)
 #' mpt_options()
-#' 
+#'
 #' @export
- 
+
 mpt_options <- function(...){
-  
-  fetched <- getOption("MPTmultiverse")
-  args <- c(...)
-  
-  if(length(args)==0L) return(fetched)
-  
+
+  opts <- getOption("MPTmultiverse")
+  args <- list(...)
+
+  if(length(args)==0L) return(opts)
+
   # Provide some shorthand terms:
-  if(args[[1]][[1]] %in% c("test", "default")){
-    changed <- switch(
+  if ((args[[1]][[1]] %in% c("test", "default"))[[1]]){
+    opts <- switch(
       args[[1]]
       , test = set_test_options()
       , default = set_default_options()
     )
   } else {
-    changed <- lapply(
-      X = fetched
-      , FUN = function(x, args){
-        if(is.list(x)) {
-          sub_args <- args[names(args)%in%names(x)]
-          x[names(sub_args)] <- sub_args
-        }
-        x
+    if (is.list(args[[1]])) {
+      args <- args[[1]]
+    }
+    for (i in names(args)) {
+      if(i %in% names(opts$mptinr)) {
+        opts$mptinr[[i]] <- unname(args[[i]])
       }
-      , args = args
-    )
-
-    sub_args <- args[names(args)%in%names(fetched)]
-    changed[names(sub_args)] <- sub_args
-
+      if(i %in% names(opts$treebugs)) {
+        opts$treebugs[[i]] <- unname(args[[i]])
+      }
+      if (i %in% names(opts)) {
+        if (is.list(args[[i]])) {
+          opts[[i]][names(opts[[i]])[names(opts[[i]]) %in% names(args[[i]])]] <-
+            args[[i]][names(opts[[i]])[names(opts[[i]]) %in% names(args[[i]])]]
+        } else {
+          opts[[i]] <- unname(args[[i]])
+        }
+      }
+    }
   }
-  options(list(MPTmultiverse = changed))
+  options(list(MPTmultiverse = opts))
 }
 
 
@@ -75,7 +79,7 @@ mpt_options <- function(...){
 
 set_test_options <- function() { # nocov start
   cat("Setting options for a quick test run.\nDo not interpret results!")
-  
+
   list(
     mptinr = list(
       bootstrap_samples = 1e1
@@ -91,6 +95,7 @@ set_test_options <- function() { # nocov start
       , Neff_min = 2
       , extend_max = 1
       , n.PPP = 4e1
+      , prior.beta = "dgamma(1,.1)"
     )
     , silent_jags = FALSE
     # , catch_warnings = TRUE
@@ -105,7 +110,7 @@ set_test_options <- function() { # nocov start
 #' @keywords internal
 
 set_default_options <- function() {
-  
+
   list(
     mptinr = list(
       bootstrap_samples = 1e3
@@ -121,6 +126,7 @@ set_default_options <- function() {
       , Neff_min = 2e3
       , extend_max = 2e1
       , n.PPP = 5e3
+      , prior.beta = "dgamma(1,.1)"
     )
     , silent_jags = TRUE
     # , catch_warnings = TRUE
