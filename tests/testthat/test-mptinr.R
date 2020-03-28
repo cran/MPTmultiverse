@@ -33,7 +33,7 @@ test_that("No-pooling approaches work", {
 
   ## dput(round(only_asymptotic$est_group[[1]]$est, 3))
   expect_equal(only_asymptotic$est_group[[1]]$est,
-               c(0.933, 0.903, 0.701, 0.887, 0.922, 0.972, 0.912, 0.75),
+               c(0.933, 0.903, 0.701, 0.887, 0.922, 0.972, 0.912, 0.725),
                tolerance = 0.001)
 
   # dput(round(only_asymptotic$gof_group[[1]]$stat_obs, 2))
@@ -90,9 +90,9 @@ test_that("No-pooling approaches work", {
 
   # dput(round(only_pb$est_indiv[[1]]$se, 2))
   expect_equal(only_pb$est_indiv[[1]]$se,
-               c(0.02, 0, 0, 0.09, 0.02, 0.04, 0, 0.1, 0.06, 0.03, 0.34, 0.34,
-                 0.04, 0.04, 0, 0.08, 0.03, 0.04, 0.32, 0.27, 0.06, 0.02, 0, 0.14,
-                 0.04, 0.02, 0, 0.09, 0.02, 0, 0.28, 0.24, 0.03, 0.02, 0, 0.05,
+               c(0.02, 0, 0, 0.09, 0.02, 0.04, 0, 0.1, 0.06, 0.03, 0.34, 0.28,
+                 0.04, 0.04, 0, 0.08, 0.03, 0.04, 0.32, 0.33, 0.06, 0.02, 0, 0.14,
+                 0.04, 0.02, 0, 0.09, 0.02, 0, 0.10, 0.07, 0.03, 0.02, 0, 0.05,
                  0.01, 0.02, 0, 0.09, 0, 0, 0, 0.12),
                tolerance = 0.05)
 
@@ -134,10 +134,10 @@ test_that("No-pooling approaches work", {
 
   # dput(round(only_npb$est_indiv[[1]]$se, 2))
   expect_equal(only_npb$est_indiv[[1]]$se,
-               c(0.02, 0, 0, 0.09, 0.01, 0.03, 0, 0.14, 0.04, 0.05, 0.33, 0.3,
-                 0.02, 0.03, 0, 0.07, 0.03, 0.04, 0.36, 0.36, 0.05, 0.02, 0, 0.13,
-                 0.04, 0.03, 0, 0.11, 0.04, 0, 0.23, 0.21, 0.05, 0.03, 0, 0.08,
-                 0.02, 0.02, 0, 0.06, 0, 0, 0, 0.08),
+               c(0.02, 0, 0, 0.09, 0.01, 0.03, 0, 0.14, 0.04, 0.05, 0.06, 0,
+                 0.02, 0.03, 0, 0.07, 0.03, 0.04, 0.12, 0.09, 0.05, 0.02, 0, 0.13,
+                 0.04, 0.03, 0, 0.11, 0.04, 0, 0.18, 0.16, 0.05, 0.03, 0, 0.08,
+                 0.02, 0.02, 0, 0.06, 0, 0, 0, 0.16),
                tolerance = 0.05)
 
   mpt_options(op)
@@ -185,11 +185,24 @@ test_that("Complete-pooling approaches work", {
                c(6.86, 4.93),
                tolerance = 0.01)
 
-  expect_equal(only_asymptotic$est_indiv[[1]], tibble())
+  expect_equal(only_asymptotic$est_indiv[[1]], tibble::tibble())
 
   expect_equal(only_asymptotic$gof[[1]]$p,
                0.117,
                tolerance = 0.001)
   mpt_options(op)
+
+  # test_within
+  est_group <- only_asymptotic$est_group[[1]]
+  test_within <- only_asymptotic$test_within[[1]]
+
+  pairs <- combn(x = unique(est_group$parameter), m = 2)
+
+  for (j in seq_len(ncol(pairs))) {
+    est_diff <- est_group$est[est_group$parameter == pairs[1, j]] - est_group$est[est_group$parameter == pairs[2, j]]
+    expect_equal(object = est_diff, expected = test_within$est[test_within$parameter1 == pairs[1, j] & test_within$parameter2 == pairs[2, j]])
+  }
+
+
 
 })

@@ -1,4 +1,4 @@
-## ----setup, include = FALSE----------------------------------------------
+## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE
   , comment = "#>"
@@ -7,11 +7,11 @@ knitr::opts_chunk$set(
   , fig.width = 8
 )
 
-## ----update-packages, eval = FALSE---------------------------------------
+## ----update-packages, eval = FALSE--------------------------------------------
 #  install.packages("MPTmultiverse")
 #  update.packages(ask = FALSE)
 
-## ----model-and-data, fig.height=5----------------------------------------
+## ----model-and-data, fig.height=5---------------------------------------------
 # load packages
 library("MPTmultiverse")
 
@@ -36,7 +36,7 @@ head(data)
 ## We then plot the response frequencies using plotFreq from the TreeBUGS package
 TreeBUGS::plotFreq(data, boxplot = FALSE, eqn = EQN_FILE)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 COL_ID <- "Subject"         # name of the variable encoding subject ID
 COL_CONDITION <- "ExpCond"  # name of the variable encoding group membership
 
@@ -54,7 +54,7 @@ data[[COL_CONDITION]] <- factor(
 ### check input data frame
 head(data)
 
-## ----options, results = 'hide'-------------------------------------------
+## ----options, results = 'hide'------------------------------------------------
 # How to change a single option:
 mpt_options(n.iter = 1e3)
 
@@ -64,7 +64,7 @@ mpt_options("test")
 # List all options that were set for the different analysis approaches:
 mpt_options()
 
-## ----analysis, results = 'hide', eval = FALSE----------------------------
+## ----analysis, results = 'hide', eval = FALSE---------------------------------
 #  set.seed(42)
 #  mpt_options("default")
 #  
@@ -77,45 +77,55 @@ mpt_options()
 #    , core = c("D", "d")
 #  )
 
-## ---- eval=FALSE---------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  save(results, file = paste0(EQN_FILE, "-", DATA_FILE, ".RData"))
 
-## ---- eval=FALSE---------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  save(results, file = "results_bayen_kuhlmann_2HTSM4.RData")
 
-## ---- eval=FALSE---------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  save(results, file = "fits/results_bayen_kuhlmann_2HTSM4.RData")
 
-## ----echo = FALSE, eval = FALSE------------------------------------------
-#  save(results, file = "../inst/extdata/results_bayen_kuhlmann.RData")
+## ----echo = FALSE, eval = FALSE-----------------------------------------------
+#  save(results, file = "../inst/extdata/results_bayen_kuhlmann.RData",
+#       version = 2, compress = "xz")
 
-## ----echo = FALSE--------------------------------------------------------
+## ----echo = FALSE, eval = TRUE------------------------------------------------
 load(file = system.file("extdata", "results_bayen_kuhlmann.RData", package = "MPTmultiverse"))
+mpt_options("default")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 check_results(results)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library("dplyr")
 library("tidyr")
 glimpse(results)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 results %>% 
   select(pooling:method, test_between) %>% 
-  unnest() %>% 
+  unnest(cols = test_between) %>% 
   filter(parameter == "g") %>% 
   print(width = 150)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
+results %>%
+  select(pooling:method, test_within) %>%
+  unnest(cols = test_within) %>%
+  filter(condition == "no_load") %>%
+  filter(parameter1 == "d" & parameter2 == "D") %>% 
+  print(width = 150)
+
+## -----------------------------------------------------------------------------
 plot(results, save = FALSE, "est")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 plot(results, save = FALSE, "test_between")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 plot(results, save = FALSE, "gof1")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 plot(results, save = FALSE, "gof2")
 

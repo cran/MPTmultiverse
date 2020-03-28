@@ -92,16 +92,56 @@ test_between_no <- function(test_between, indiv_pars, CI_SIZE, cols_ci) {
 
       tmp_se <- stats::coef(stats::summary.lm(tmp_lm))[2,"Std. Error"]
 
-      test_between[ i , c("est_diff" , "se", "p") ] <-
-        c(diff(rev(tmp_t$estimate)), tmp_se, tmp_t$p.value)
+      test_between[ i , "est_diff"] <- diff(rev(tmp_t$estimate))
+      test_between[ i , "se"] <- tmp_se
+      test_between[ i , "p" ] <- tmp_t$p.value
 
-      test_between[i, cols_ci] <- test_between[i, ]$est_diff +
-        stats::qnorm(CI_SIZE)* test_between[i, ]$se
+      for (j in seq_along(cols_ci)) {
+        test_between[i, cols_ci[j]] <- test_between[i, ]$est_diff +
+          stats::qnorm(CI_SIZE[j])* test_between[i, ]$se
+      }
+
+
     }, silent = TRUE)
   }
   return(test_between)
 }
 
+test_within_no <- function(test_within, est_indiv) {
+
+  tmp_data <- est_indiv %>%
+    dplyr::filter(.data$identifiable) %>%
+    tidyr::pivot_wider(id_cols = c("id", "condition"), values_from = "est", names_from = "parameter")
+
+  for (i in seq_len(nrow(test_within))) {
+
+    c  <- test_within$condition[i]
+    p1 <- test_within$parameter1[i]
+    p2 <- test_within$parameter2[i]
+
+    condition_data <-tmp_data[tmp_data$condition == c, , drop = FALSE]
+    if(nrow(stats::na.omit(condition_data))>1) { # only calculate test if N > 1
+      # two-sided *p* values
+      t_out <- stats::t.test(x = condition_data[[p1]], y = condition_data[[p2]], paired = TRUE)
+      test_within$est[i] <- t_out$estimate
+      if(getRversion() >= "3.6.0") {
+        test_within$se[i] <- t_out$stderr
+      }
+      test_within$statistic[i] <- t_out$statistic
+      test_within$df[i] <- unname(t_out$parameter)
+      test_within$p[i] <- t_out$p.value
+    }
+  }
+  # confidence intervals from normal theory
+  if(getRversion() >= "3.6.0") {
+    CI <- getOption("MPTmultiverse")$ci_size
+    for (i in seq_along(CI)) {
+      test_within[[paste0("ci_", CI[i])]] <- stats::qt(p = CI[i], df = test_within$df) * test_within$se + test_within$est
+    }
+  }
+
+  test_within
+}
 
 ################
 ## no pooling ##
@@ -128,19 +168,12 @@ mpt_mptinr_no <- function(
   CI_SIZE <- OPTIONS$ci_size
   MAX_CI_INDIV <- OPTIONS$max_ci_indiv
 
-  bootstrap <- c()
-
-  if ("pb_no" %in% method) {
-    bootstrap <- c(bootstrap, "pb")
-  }
-  if ("npb_no" %in% method) {
-    bootstrap <- c(bootstrap, "npb")
-  }
+  bootstrap <- gsub(intersect(method, c("pb_no", "npb_no")), pattern = "_no", replacement = "")
 
   t0 <- Sys.time()
   fit_mptinr <- MPTinR::fit.mpt(prepared$data[,prepared$col_freq],
                         model.filename = model,
-                        n.optim = MPTINR_OPTIONS$n.optim,
+                        n.optim = max(3L, MPTINR_OPTIONS$n.optim),
                         fit.aggregated = FALSE,
                         show.messages = FALSE, output = "full",
                         ci = (1 - stats::pnorm(1))*2*100)
@@ -319,6 +352,13 @@ mpt_mptinr_no <- function(
                       indiv_pars = res[["asymptotic_no"]]$est_indiv[[1]],
                       CI_SIZE = CI_SIZE, cols_ci = prepared$cols_ci)
 
+    # test_within ---------------------------------------------------------
+    res[["asymptotic_no"]]$test_within[[1]] <-
+      test_within_no(
+        test_within = res[["asymptotic_no"]]$test_within[[1]],
+        est_indiv = res[["asymptotic_no"]]$est_indiv[[1]]
+      )
+
     ### copy information that is same ----
 
     res[["asymptotic_no"]]$convergence <- list(convergence)
@@ -370,14 +410,20 @@ get_pb_results <- function(dataset
   , fit_mptinr
   , additional_time
   , convergence
-  , core = core) {
+  , core) {
 
   OPTIONS <- getOption("MPTmultiverse")
   MPTINR_OPTIONS <- OPTIONS$mptinr
   CI_SIZE <- OPTIONS$ci_size
   MAX_CI_INDIV <- OPTIONS$max_ci_indiv
 
-  cl <- parallel::makeCluster(rep("localhost", OPTIONS$n.CPU))
+  # only create a cluster if no default cluster is set
+  if(is.null(parallel::getDefaultCluster())) {
+    cl <- parallel::makeCluster(rep("localhost", OPTIONS$n.CPU))
+  } else {
+    cl <- parallel::getDefaultCluster()
+  }
+
   parallel::clusterEvalQ(cl, library("MPTinR"))
   parallel::clusterSetRNGStream(cl, iseed = sample.int(.Machine$integer.max, 1))
 
@@ -397,8 +443,8 @@ get_pb_results <- function(dataset
     t1 <- Sys.time()
     fit_pb <- parallel::clusterApplyLB(
       cl
-      , seq_len(nrow(prepared$data))
-      , get_pb_output
+      , x = seq_len(nrow(prepared$data))
+      , fun = get_pb_output
       , fit_mptinr = fit_mptinr
       , data = prepared$data
       , model_file = model
@@ -448,10 +494,13 @@ get_pb_results <- function(dataset
           res$est_indiv[[1]]$parameter == p, "est" ] <-
         fit_mptinr$parameters$individual[p,"estimates",i]
 
-      res$est_indiv[[1]][
+      tmp_ci <- stats::quantile(fit_pb[[i]]$parameters$individual[p,"estimates",], probs = CI_SIZE)
+      for (cin in seq_along(prepared$cols_ci)) {
+        res$est_indiv[[1]][
         res$est_indiv[[1]]$id == prepared$data[i,"id"] &
-          res$est_indiv[[1]]$parameter == p, prepared$cols_ci ] <-
-        stats::quantile(fit_pb[[i]]$parameters$individual[p,"estimates",], probs = CI_SIZE)
+          res$est_indiv[[1]]$parameter == p,  prepared$cols_ci[cin]] <-
+          tmp_ci[cin]
+      }
 
       res$est_indiv[[1]][
         res$est_indiv[[1]]$id == prepared$data[i,"id"] &
@@ -517,6 +566,13 @@ get_pb_results <- function(dataset
     test_between_no(test_between = res$test_between[[1]],
                     indiv_pars = res$est_indiv[[1]],
                       CI_SIZE = CI_SIZE, cols_ci = prepared$cols_ci)
+
+
+  # test_within ----------------------------------------------------------------
+  res$test_within[[1]] <- test_within_no(
+    test_within = res$test_within[[1]]
+    , est_indiv = res$est_indiv[[1]]
+  )
 
   # ----------------------------------------------------------------------------
   # make gof_group for parametric-bootstrap approach
@@ -717,7 +773,8 @@ mpt_mptinr_complete <- function(dataset,
     , convergence = fit_mptinr_agg$best.fits[[1]]$convergence
   )
 
-
+  variance_covariance_matrices <- vector(mode = "list", length = length(prepared$conditions))
+  names(variance_covariance_matrices) <- prepared$conditions
   for (i in seq_along(prepared$conditions)) {
     t0 <- Sys.time()
     fit_mptinr_tmp <- MPTinR::fit.mpt(colSums(
@@ -741,11 +798,18 @@ mpt_mptinr_complete <- function(dataset,
       fit_mptinr_tmp$parameters[
         res$est_group[[1]][res$est_group[[1]]$condition == prepared$conditions[i], ]$parameter, "estimates"]
 
+    variance_covariance <- tryCatch(
+      solve(fit_mptinr_tmp$hessian[[1]])
+      , error = function(x){
+        limSolve::Solve(fit_mptinr_tmp$hessian[[1]])
+      })
     par_se <- rep(NA_real_, length(rownames(fit_mptinr_tmp$parameters)))
-    par_se <- tryCatch(sqrt(diag(solve(fit_mptinr_tmp$hessian[[1]]))),
-                       error = function(x)
-                         sqrt(diag(limSolve::Solve(fit_mptinr_tmp$hessian[[1]]))))
-    names(par_se) <- rownames(fit_mptinr_tmp$parameters)
+    par_se <- sqrt(diag(variance_covariance))
+    rownames(variance_covariance) <-
+      colnames(variance_covariance) <-
+      names(par_se) <-
+      rownames(fit_mptinr_tmp$parameters)
+    variance_covariance_matrices[[prepared$conditions[i]]] <- variance_covariance
 
     res$est_group[[1]][
       res$est_group[[1]]$condition ==
@@ -769,7 +833,7 @@ mpt_mptinr_complete <- function(dataset,
       stats::qnorm(CI_SIZE[i])*res$est_group[[1]][,"se"]
   }
 
-  # ----------------------------------------------------------------------------
+  # -----------------------------------------------------------------------
   # test_between
   est_group <- res$est_group[[1]]
   test_between <- res$test_between[[1]]
@@ -798,6 +862,44 @@ mpt_mptinr_complete <- function(dataset,
   }
 
   res$test_between[[1]] <- test_between
+
+
+
+  # test_within -----------------------------------------------------------
+  test_within <- res$test_within[[1]]
+
+  for(i in seq_len(nrow(test_within))) {
+    c <- test_within$condition[i]
+    p1 <- test_within$parameter1[i]
+    p2 <- test_within$parameter2[i]
+
+    test_within$est[i] <-
+      est_group$est[est_group$condition == c & est_group$parameter == p1] -
+      est_group$est[est_group$condition == c & est_group$parameter == p2]
+
+    vec <- rep(0, nrow(variance_covariance_matrices[[c]]))
+    names(vec) <- rownames(variance_covariance_matrices[[c]])
+    vec[p1] <- +1
+    vec[p2] <- -1
+    # print(vec)
+
+    test_within$se[i] <- sqrt(
+      vec %*% variance_covariance_matrices[[c]] %*% vec
+    )
+  }
+  # two-sided *p* values
+  test_within$statistic <- test_within$est / test_within$se
+  test_within$p <- 1 - abs(stats::pnorm(q = test_within$est, mean = 0, sd = test_within$se) - .5) * 2
+
+  # confidence intervals from normal theory
+  CI <- getOption("MPTmultiverse")$ci_size
+  for (i in seq_along(CI)) {
+    test_within[[paste0("ci_", CI[i])]] <- stats::qnorm(p = CI[i], mean = test_within$est, sd = test_within$se)
+  }
+
+
+  res$test_within[[1]] <- test_within
+
 
   # ----------------------------------------------------------------------------
   # convergence
