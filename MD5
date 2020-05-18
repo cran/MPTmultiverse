@@ -1,6 +1,6 @@
-e58771c2a4e0a4846830e1c61968e39a *DESCRIPTION
+e4093e14ffc852cf2f532a879aa62d6c *DESCRIPTION
 843cf2d97f2f95cdd3b7e728fc64fc68 *NAMESPACE
-c43f45d9c8234850f79725c3a9939d6d *NEWS.md
+8dd1f9499c58c2cc51fb08a3dff06964 *NEWS.md
 3dcca1b78e32166996c3efd7f59450ce *R/check_results.R
 3a65c69a07f7c93481919db6bc1e1ddf *R/fit_mpt.R
 a2de0d9664ddbf8e4fa1e7af30b05f3b *R/get_eqn_categories.R
@@ -14,9 +14,9 @@ faf7d231083e8038c413991ca81d3b2c *R/prep_data_fitting.R
 95a46328541e1835c8f31faba95d6f8f *R/treebugs.R
 7ba90e1c6fef8537e2ed9d137a801f96 *R/write_results.R
 880346b0d7e8d0beb7da9f347de55d93 *README.md
-5fe403db3e748972bb3219944b86e8f4 *build/vignette.rds
+dc246412bcc98313d83b6994f58ecc1d *build/vignette.rds
 7bf68aaa17ed61961f91891dd914b15f *inst/doc/introduction-bayen_kuhlmann_2011.R
-cf5242568d1f18c48daba9f803b40ba6 *inst/doc/introduction-bayen_kuhlmann_2011.html
+33d25fa16dcefe4887a3a7b60d36a782 *inst/doc/introduction-bayen_kuhlmann_2011.html
 a139dc06efc8599d9ab6b0c7f2c88d92 *inst/doc/introduction-bayen_kuhlmann_2011.rmd
 378c931503b45c257da3b87e4c5e7490 *inst/extdata/2HTSM_Submodel4.eqn
 31de4fabf5cb90e987b2d418a49fed02 *inst/extdata/Kuhlmann_dl7.csv
@@ -35,7 +35,7 @@ dd4bfb25654cdb367a4c4485a712e332 *tests/testthat.R
 c04b39aa866ac729df2bf88ddf48c8f0 *tests/testthat/test-data-structures.R
 a60c7e95ba346696712f855ff9673d83 *tests/testthat/test-identifiability_checks.R
 e72d9c5908546dac0b22cc760890a110 *tests/testthat/test-mpt_options.R
-25031aa67bff49b704a2e2a63919b4ce *tests/testthat/test-mptinr.R
+d243df9cf27ec0d55e31e209ebc16351 *tests/testthat/test-mptinr.R
 a5cb9755b915c3c67004fe4301df96f5 *tests/testthat/test_treebugs.R
 7e3b16937fce40bab6396676351497c7 *vignettes/NOT_USED/1_bayen_kuhlmann_2011.html
 378c931503b45c257da3b87e4c5e7490 *vignettes/NOT_USED/2HTSM_Submodel4.eqn
