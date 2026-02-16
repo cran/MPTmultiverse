@@ -8,8 +8,8 @@ knitr::opts_chunk$set(
 )
 
 ## ----update-packages, eval = FALSE--------------------------------------------
-#  install.packages("MPTmultiverse")
-#  update.packages(ask = FALSE)
+# install.packages("MPTmultiverse")
+# update.packages(ask = FALSE)
 
 ## ----model-and-data, fig.height=5---------------------------------------------
 # load packages
@@ -65,30 +65,30 @@ mpt_options("test")
 mpt_options()
 
 ## ----analysis, results = 'hide', eval = FALSE---------------------------------
-#  set.seed(42)
-#  mpt_options("default")
-#  
-#  results <- fit_mpt(
-#    model = EQN_FILE
-#    , dataset = DATA_FILE
-#    , data = data
-#    , id = COL_ID
-#    , condition = COL_CONDITION
-#    , core = c("D", "d")
-#  )
+# set.seed(42)
+# mpt_options("default")
+# 
+# results <- fit_mpt(
+#   model = EQN_FILE
+#   , dataset = DATA_FILE
+#   , data = data
+#   , id = COL_ID
+#   , condition = COL_CONDITION
+#   , core = c("D", "d")
+# )
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  save(results, file = paste0(EQN_FILE, "-", DATA_FILE, ".RData"))
+# save(results, file = paste0(EQN_FILE, "-", DATA_FILE, ".RData"))
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  save(results, file = "results_bayen_kuhlmann_2HTSM4.RData")
+# save(results, file = "results_bayen_kuhlmann_2HTSM4.RData")
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  save(results, file = "fits/results_bayen_kuhlmann_2HTSM4.RData")
+# save(results, file = "fits/results_bayen_kuhlmann_2HTSM4.RData")
 
 ## ----echo = FALSE, eval = FALSE-----------------------------------------------
-#  save(results, file = "../inst/extdata/results_bayen_kuhlmann.RData",
-#       version = 2, compress = "xz")
+# save(results, file = "../inst/extdata/results_bayen_kuhlmann.RData",
+#      version = 2, compress = "xz")
 
 ## ----echo = FALSE, eval = TRUE------------------------------------------------
 load(file = system.file("extdata", "results_bayen_kuhlmann.RData", package = "MPTmultiverse"))
